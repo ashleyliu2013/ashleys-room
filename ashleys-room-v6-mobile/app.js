@@ -39,6 +39,19 @@ function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('show')
 function esc(s=''){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
 function formatLines(s=''){return esc(s||'—').replace(/\n/g,'<br>')}
 
+
+// v6.3 quiet room audio: synthesized locally, no external audio files required.
+let audioCtx=null,soundEnabled=localStorage.getItem('ashleys-room-sound-v1')!=='off',lastZoneForSound=null,lastPetVoice=0;
+function ensureAudio(){if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx}
+function tone(freq=660,dur=.09,vol=.025,type='sine',delay=0){if(!soundEnabled)return;const a=ensureAudio(),o=a.createOscillator(),g=a.createGain(),t=a.currentTime+delay;o.type=type;o.frequency.setValueAtTime(freq,t);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g).connect(a.destination);o.start(t);o.stop(t+dur+.02)}
+function playHint(){tone(740,.08,.018,'sine');tone(980,.09,.012,'sine',.055)}
+function playOpen(){tone(520,.06,.018,'triangle');tone(780,.10,.012,'sine',.045)}
+function playDog(){if(!soundEnabled)return;const a=ensureAudio(),t=a.currentTime;for(const [i,f] of [[0,185],[.12,155]]){const o=a.createOscillator(),g=a.createGain(),filter=a.createBiquadFilter();o.type='sawtooth';o.frequency.setValueAtTime(f,t+i);o.frequency.exponentialRampToValueAtTime(f*.72,t+i+.11);filter.type='lowpass';filter.frequency.value=700;g.gain.setValueAtTime(.0001,t+i);g.gain.exponentialRampToValueAtTime(.035,t+i+.015);g.gain.exponentialRampToValueAtTime(.0001,t+i+.14);o.connect(filter).connect(g).connect(a.destination);o.start(t+i);o.stop(t+i+.16)}}
+function playCat(){if(!soundEnabled)return;const a=ensureAudio(),t=a.currentTime,o=a.createOscillator(),g=a.createGain();o.type='triangle';o.frequency.setValueAtTime(620,t);o.frequency.exponentialRampToValueAtTime(930,t+.12);o.frequency.exponentialRampToValueAtTime(540,t+.34);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.025,t+.035);g.gain.exponentialRampToValueAtTime(.0001,t+.38);o.connect(g).connect(a.destination);o.start(t);o.stop(t+.4)}
+function updateSoundButton(){const b=$('#soundBtn');if(b){b.textContent=soundEnabled?'🔊':'🔇';b.title=soundEnabled?'房間聲音：開':'房間聲音：關'}}
+$('#soundBtn')?.addEventListener('click',()=>{soundEnabled=!soundEnabled;localStorage.setItem('ashleys-room-sound-v1',soundEnabled?'on':'off');if(soundEnabled){ensureAudio();playOpen();toast('房間聲音已開啟')}else toast('房間聲音已關閉');updateSoundButton()});updateSoundButton();
+document.addEventListener('pointerdown',()=>{if(soundEnabled)ensureAudio()},{once:true});
+
 // week tabs
 const tabs=$('.week-tabs');
 DAYS.forEach(d=>{const b=document.createElement('button');b.type='button';b.innerHTML=`${d}<small>${dates[d]}</small>`;b.dataset.day=d;if(d===day)b.classList.add('active');b.addEventListener('click',()=>setDay(d));tabs.appendChild(b)});
@@ -178,7 +191,17 @@ const deskLight=new THREE.PointLight(0xffc876,5.2,2.2,2);deskLight.position.set(
 cyl(.98,.13,[3.45,.77,1.45],mats.oak,'meal','dining table');cyl(.17,.7,[3.45,.39,1.45],mats.oakDark);
 box([1.45,.022,.52],[3.45,.85,1.45],new THREE.MeshStandardMaterial({color:0x42543b,roughness:1}),'meal','table runner');
 for(const a of [0,Math.PI/2,Math.PI,Math.PI*1.5]){const x=3.45+Math.cos(a)*1.35,z=1.45+Math.sin(a)*1.35;box([.62,.13,.62],[x,.48,z],mats.oak);box([.62,.74,.12],[x+Math.cos(a)*.24,.84,z+Math.sin(a)*.24],mats.oakDark)}
-mug(3.18,.91,1.28,0xc5aa75);mug(3.74,.91,1.55,0x82674c);sphere(.11,[3.46,.94,1.45],mats.mustard);
+mug(3.18,.91,1.28,0xc5aa75);mug(3.74,.91,1.55,0x82674c);
+// v6.3 lived-in dining spread: ceramic plates, soup bowl, bread, fruit and greens.
+const ceramic=new THREE.MeshStandardMaterial({color:0xe3d8c3,roughness:.72});
+const soupMat=new THREE.MeshStandardMaterial({color:0xb9683f,roughness:.82});
+const greenFood=new THREE.MeshStandardMaterial({color:0x66834f,roughness:.9});
+const breadMat=new THREE.MeshStandardMaterial({color:0xc89252,roughness:.92});
+const fruitMat=new THREE.MeshStandardMaterial({color:0xb85f45,roughness:.85});
+for(const [x,z] of [[3.18,1.62],[3.70,1.30]]){cyl(.18,.025,[x,.91,z],ceramic,'meal','plate');sphere(.075,[x-.035,.95,z],greenFood,'meal','greens');sphere(.065,[x+.055,.95,z+.025],breadMat,'meal','food')}
+cyl(.15,.10,[3.46,.93,1.45],ceramic,'meal','soup bowl');cyl(.125,.012,[3.46,.99,1.45],soupMat,'meal','soup');
+for(const [x,z] of [[3.02,1.42],[3.84,1.52],[3.55,1.72]])sphere(.055,[x,.94,z],fruitMat,'meal','fruit');
+box([.012,.012,.34],[3.03,.94,1.75],mats.metal,'meal','cutlery',[0,.12,0]);box([.012,.012,.34],[3.87,.94,1.14],mats.metal,'meal','cutlery',[0,-.15,0]);
 box([4.7,.92,.62],[3.25,.46,3.63],mats.oakDark,null,'kitchen base',[],true);box([4.75,.08,.7],[3.25,.96,3.63],mats.stone,null,'counter');
 for(const x of [1.55,2.35,3.15,3.95])box([.7,.62,.06],[x,.48,3.29],mats.oak);
 box([1.1,2.0,.62],[5.0,1.45,3.63],mats.navy,null,'fridge',[],true);
@@ -361,8 +384,8 @@ function resetStick(e){if(e&&e.pointerId!==stickPointer)return;stickPointer=null
 let lookPointer=null,lastLook=null;canvas.addEventListener('pointerdown',e=>{if(!isMobile())return;lookPointer=e.pointerId;lastLook={x:e.clientX,y:e.clientY}});canvas.addEventListener('pointermove',e=>{if(!isMobile()||e.pointerId!==lookPointer||!lastLook)return;const dx=e.clientX-lastLook.x,dy=e.clientY-lastLook.y;lastLook={x:e.clientX,y:e.clientY};camera.rotation.order='YXZ';camera.rotation.y-=dx*.004;camera.rotation.x=THREE.MathUtils.clamp(camera.rotation.x-dy*.004,-1.2,1.2)});canvas.addEventListener('pointerup',e=>{if(e.pointerId===lookPointer){lookPointer=null;lastLook=null}});
 
 // nearest interactable
-let currentZone=null;function updateProximity(){const p=camera.position;let best=null,bestScore=999;for(const [z,o] of Object.entries(zones)){const dx=p.x-o.pos.x,dz=p.z-o.pos.z,d=Math.hypot(dx,dz),score=d/(o.range||1.9);if(d<=(o.range||1.9)&&score<bestScore){bestScore=score;best=z}}currentZone=best;const desktop=$('#interactBtn'),mobile=$('#mobileInteract');if(currentZone){desktop.disabled=false;desktop.classList.add('ready');desktop.querySelector('span').textContent=zones[currentZone].label;mobile.disabled=false;mobile.classList.add('ready')}else{desktop.disabled=true;desktop.classList.remove('ready');desktop.querySelector('span').textContent='靠近物件';mobile.disabled=true;mobile.classList.remove('ready')}}
-$('#interactBtn').addEventListener('click',interactCurrent);$('#mobileInteract').addEventListener('click',interactCurrent);function interactCurrent(){if(currentZone)openZone(currentZone)}
+let currentZone=null;function updateProximity(){const p=camera.position;let best=null,bestScore=999;for(const [z,o] of Object.entries(zones)){const dx=p.x-o.pos.x,dz=p.z-o.pos.z,d=Math.hypot(dx,dz),score=d/(o.range||1.9);if(d<=(o.range||1.9)&&score<bestScore){bestScore=score;best=z}}const previous=currentZone;currentZone=best;const desktop=$('#interactBtn'),mobile=$('#mobileInteract');if(currentZone){desktop.disabled=false;desktop.classList.add('ready');desktop.querySelector('span').textContent=zones[currentZone].label;mobile.disabled=false;mobile.classList.add('ready');mobile.textContent=currentZone==='pet'?'摸摸看':'點開看看';if(previous!==currentZone){playHint();if(currentZone==='pet'&&performance.now()-lastPetVoice>9000){lastPetVoice=performance.now();const dogD=Math.hypot(p.x+2.85,p.z-2.92),catD=Math.hypot(p.x+1.95,p.z-3.05);setTimeout(()=>dogD<=catD?playDog():playCat(),180)}}}else{desktop.disabled=true;desktop.classList.remove('ready');desktop.querySelector('span').textContent='靠近物件';mobile.disabled=true;mobile.classList.remove('ready');mobile.textContent='查看'}lastZoneForSound=currentZone}
+$('#interactBtn').addEventListener('click',interactCurrent);$('#mobileInteract').addEventListener('click',interactCurrent);function interactCurrent(){if(currentZone){playOpen();if(currentZone==='pet'&&performance.now()-lastPetVoice>4500){lastPetVoice=performance.now();Math.random()<.55?playDog():playCat()}openZone(currentZone)}}
 
 // quick map
 const jumpPoints={entrance:[0,1.66,3.5,Math.PI],living:[-.2,1.66,2.5,Math.PI],dining:[1.75,1.66,1.45,-Math.PI/2],work:[2.1,1.66,-1.45,-Math.PI],bedroom:[-2.0,1.66,-1.2,-Math.PI],message:[2.5,1.66,-2.9,-Math.PI/2]};

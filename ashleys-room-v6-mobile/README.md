@@ -1,3 +1,10 @@
+ASHLEY'S ROOM v6.3 · Living Room Update
+
+- Quiet proximity/open interaction sounds
+- Dog/cat synthesized voices with cooldown
+- Mobile “點開看看” interaction cue
+- Richer dining table food scene
+
 # ASHLEY'S ROOM v6 · Online Room
 
 這版把 v5.1 的本機生活房間升級成可跨裝置同步的版本。
@@ -23,4 +30,3 @@ python3 -m http.server 8080
 
 ## 要正式跨裝置同步
 照 `SETUP_SUPABASE.md` 完成 Supabase 設定，再部署到 Vercel / Netlify。
-deploy trigger
