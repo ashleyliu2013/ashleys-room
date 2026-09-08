@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#191812" />
+  <title>ASHLEY'S ROOM v6.3 · Living Room</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+<main class="app-shell">
+  <section id="roomApp" class="room-app" aria-label="Ashley 的第一人稱生活房間">
+    <header class="topbar">
+      <div class="brand"><b>ASHLEY'S ROOM <em>v6.3</em></b><small>A SMALL WORLD OF GOOD DAYS · ONLINE ROOM</small></div>
+      <nav class="week-tabs" aria-label="星期切換"></nav>
+      <div class="top-meta"><span id="timeText">--:--</span><span id="modeText">NIGHT</span></div>
+    </header>
+
+    <div class="stage-wrap" id="stageWrap">
+      <canvas id="scene" aria-label="第一人稱 3D 房間"></canvas>
+      <div id="loading" class="loading-card"><div class="loading-art"></div><div class="loading-copy"><span class="loading-dot"></span><div><b>Opening Ashley's room</b><small>點亮燈籠、整理靠枕、把今天的生活放回房間裡</small></div></div></div>
+
+      <div class="hud-top"><span class="status-dot"></span><span id="roomStatus">MON · room online</span></div>
+      <div class="crosshair" aria-hidden="true"><i></i><i></i></div>
+      <button id="interactBtn" class="interact-prompt" type="button" disabled><b>E</b><span>靠近可以查看</span></button>
+
+      <button id="enterBtn" class="enter-btn" type="button">進入房間</button>
+      <button id="mapBtn" class="map-btn" type="button">EXPLORE MAP</button>
+      <button id="soundBtn" class="sound-btn" type="button" aria-label="切換房間聲音">🔊</button>
+      <button id="editEntry" class="edit-entry" type="button">EDIT</button>
+      <div id="walkHelp" class="walk-help">WASD 移動 · Shift 快走 · 滑鼠看方向 · E 查看 · ESC / WASD 關閉內容</div>
+
+      <div class="mobile-stick" id="mobileStick" aria-label="移動搖桿"><div class="stick-base"><div class="stick-knob"></div></div></div>
+      <button id="mobileInteract" class="mobile-interact" type="button" disabled>查看</button>
+
+      <aside id="mapPanel" class="map-panel" aria-hidden="true">
+        <div class="panel-head"><div><small>QUICK WALK</small><h2>探索地圖</h2></div><button class="icon-btn" id="mapClose" type="button">×</button></div>
+        <div class="map-grid">
+          <button data-jump="entrance">玄關</button><button data-jump="living">客廳</button><button data-jump="dining">餐桌</button><button data-jump="work">工作區</button><button data-jump="bedroom">睡眠區</button><button data-jump="message">留言牆</button>
+        </div>
+      </aside>
+
+      <section id="detailPanel" class="detail-panel" aria-live="polite">
+        <button id="detailClose" class="icon-btn" type="button">×</button>
+        <div class="detail-kicker" id="detailKicker">ROOM ONLINE</div>
+        <h2 id="detailTitle">今天的房間</h2>
+        <div id="detailContent" class="detail-content"></div>
+      </section>
+
+      <aside id="editDrawer" class="drawer" aria-hidden="true">
+        <div class="drawer-head"><div><small>CONTROL MODE</small><h2>編輯 <span id="drawerDay">MON</span></h2></div><button id="drawerClose" class="icon-btn" type="button">×</button></div>
+        <div id="authBox" class="auth-box">
+          <p id="authHelp">Owner Control Mode</p>
+          <div id="cloudAuthFields">
+            <input id="ownerEmail" type="email" placeholder="Owner email" autocomplete="username" />
+            <input id="ownerPassword" type="password" placeholder="Password" autocomplete="current-password" />
+          </div>
+          <div id="localPinFields" class="is-hidden">
+            <input id="pinInput" inputmode="numeric" maxlength="4" placeholder="4 位數 PIN" autocomplete="off" />
+          </div>
+          <button id="pinBtn" class="primary" type="button">OWNER LOGIN</button><small id="pinMsg"></small>
+        </div>
+        <form id="editForm" class="edit-form is-hidden">
+          <div class="save-state"><span id="saveStateDot"></span><span id="saveStateText">正在確認同步狀態</span></div>
+          <button id="syncAllBtn" class="secondary" type="button">把這台電腦的 MON–FRI 同步到雲端</button>
+          <label>今日狀態<input name="mood" placeholder="今天有點累，但有好好吃飯 ♡"></label>
+          <label>簡單行程<input name="schedule" placeholder="14:00 工作 · 18:30 晚餐"></label>
+          <fieldset class="meal-fieldset"><legend>三餐</legend>
+            <div class="meal-row"><div class="meal-copy"><b>早餐</b><input name="breakfast" placeholder="咖啡"></div><label class="photo-button">＋ 照片<input data-photo="breakfastPhoto" type="file" accept="image/*"></label><div class="thumb" data-preview="breakfastPhoto"></div></div>
+            <div class="meal-row"><div class="meal-copy"><b>午餐</b><input name="lunch" placeholder="牛肉烏龍麵"></div><label class="photo-button">＋ 照片<input data-photo="lunchPhoto" type="file" accept="image/*"></label><div class="thumb" data-preview="lunchPhoto"></div></div>
+            <div class="meal-row"><div class="meal-copy"><b>晚餐</b><input name="dinner" placeholder="還沒決定"></div><label class="photo-button">＋ 照片<input data-photo="dinnerPhoto" type="file" accept="image/*"></label><div class="thumb" data-preview="dinnerPhoto"></div></div>
+          </fieldset>
+          <label>照片牆標題<input name="photoTitle" placeholder="今天想留下的照片"></label>
+          <label class="wide-upload">今日照片<input data-photo="photo" type="file" accept="image/*"></label><div class="photo-preview" data-preview="photo"></div>
+          <label>睡眠<input name="sleep" placeholder="今晚目標：早點睡"></label>
+          <label>寵物<input name="pet" placeholder="今天也有陪毛孩一下"></label>
+          <label>待辦總覽<textarea name="todo" rows="3" placeholder="回訊息\n早點睡"></textarea></label>
+          <fieldset class="meal-fieldset note-fieldset"><legend>便利貼＋照片</legend>
+            <div class="meal-row"><div class="meal-copy"><b>便利貼 1</b><input name="note1" placeholder="今天想告訴你的事"></div><label class="photo-button">＋ 照片<input data-photo="note1Photo" type="file" accept="image/*"></label><div class="thumb" data-preview="note1Photo"></div></div>
+            <div class="meal-row"><div class="meal-copy"><b>便利貼 2</b><input name="note2" placeholder="留一個小片段"></div><label class="photo-button">＋ 照片<input data-photo="note2Photo" type="file" accept="image/*"></label><div class="thumb" data-preview="note2Photo"></div></div>
+            <div class="meal-row"><div class="meal-copy"><b>便利貼 3</b><input name="note3" placeholder="想放照片也可以"></div><label class="photo-button">＋ 照片<input data-photo="note3Photo" type="file" accept="image/*"></label><div class="thumb" data-preview="note3Photo"></div></div>
+          </fieldset>
+          <button class="primary save-btn" type="submit">儲存今天</button>
+          <p class="save-note">修改後按「儲存今天」。Cloud Mode 會同步到其他裝置；未設定 Supabase 時會自動使用本機模式。</p>
+          <button id="lockBtn" class="secondary" type="button">LOCK CONTROL MODE</button>
+        </form>
+      </aside>
+      <div id="toast" class="toast" role="status"></div>
+    </div>
+  </section>
+</main>
+<script>
+  window.__ashleyRoomBooted = false;
+  window.addEventListener('error', function (event) {
+    const loading = document.getElementById('loading');
+    if (!loading) return;
+    const title = loading.querySelector('b');
+    const copy = loading.querySelector('small');
+    if (title) title.textContent = '房間載入失敗';
+    if (copy) copy.textContent = '請重新整理；若仍失敗，打開 Console 查看錯誤。';
+  });
+  setTimeout(function () {
+    const loading = document.getElementById('loading');
+    if (!window.__ashleyRoomBooted && loading && !loading.classList.contains('hide')) {
+      const title = loading.querySelector('b');
+      const copy = loading.querySelector('small');
+      if (title) title.textContent = '載入時間比預期久';
+      if (copy) copy.textContent = '正常應在幾秒內完成。請重新整理或查看 Console。';
+    }
+  }, 10000);
+</script>
+<script src="./config.js"></script>
+<script type="module" src="./app.js?v=6.3"></script>
+</body>
+</html>
