@@ -23,3 +23,4 @@ python3 -m http.server 8080
 
 ## 要正式跨裝置同步
 照 `SETUP_SUPABASE.md` 完成 Supabase 設定，再部署到 Vercel / Netlify。
+deploy trigger
